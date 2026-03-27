@@ -67,7 +67,7 @@ const orderSchema = new mongoose.Schema(
 
 orderSchema.index({ user: 1, createdAt: -1 });
 
-const orderModel = mongoose.model("Order", orderSchema);
+const OrderModel = mongoose.model("Order", orderSchema);
 
 const validateOrder = (data) => {
   const productSchema = Joi.object({
@@ -104,6 +104,6 @@ const validateOrder = (data) => {
 };
 
 module.exports = {
-  orderModel,
+  OrderModel,
   validateOrder,
 };

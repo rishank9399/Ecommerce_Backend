@@ -140,8 +140,8 @@ exports.getUser = async (req, res, next) => {
 };
 
 exports.updateUser = async (req, res, next) => {
-  const { username, password } = req.body;
   try {
+    const { username, password } = req.body;
     let updateData = {};
 
     if (username) updateData.username = username;

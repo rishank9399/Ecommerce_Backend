@@ -37,7 +37,7 @@ const cartSchema = new mongoose.Schema(
 
 cartSchema.index({ user: 1, "products.productId": 1 }, { unique: true });
 
-const cartModel = mongoose.model("Cart", cartSchema);
+const CartModel = mongoose.model("Cart", cartSchema);
 
 const validateCart = (data) => {
   const productSchema = Joi.object({
@@ -57,6 +57,6 @@ const validateCart = (data) => {
 };
 
 module.exports = {
-  cartModel,
+  CartModel,
   validateCart,
 };

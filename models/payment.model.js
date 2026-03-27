@@ -28,5 +28,5 @@ const paymentSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-const Payment = mongoose.model("payment", paymentSchema);
-module.exports = Payment;
+const PaymentModel = mongoose.model("payment", paymentSchema);
+module.exports = PaymentModel;

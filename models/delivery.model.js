@@ -38,7 +38,7 @@ const deliverySchema = new mongoose.Schema(
 
 deliverySchema.index({ order: 1 }, { unique: true });
 
-const deliveryModel = mongoose.model("Delivery", deliverySchema);
+const DeliveryModel = mongoose.model("Delivery", deliverySchema);
 
 const validateDelivery = (data) => {
   const schema = Joi.object({
@@ -63,6 +63,6 @@ const validateDelivery = (data) => {
 };
 
 module.exports = {
-  deliveryModel,
+  DeliveryModel,
   validateDelivery,
 };

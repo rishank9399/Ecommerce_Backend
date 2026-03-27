@@ -78,15 +78,18 @@ const productSchema = new mongoose.Schema(
 
     isActive: {
       type: Boolean,
-      default: true
+      default: true,
+      select: false
     }
   },
   { timestamps: true }
 );
 
-productSchema.index({ title: "text", category: "text" });
+productSchema.index({ title: "text", description: "text" });
+productSchema.index({ category: 1});
+productSchema.index({ price: 1});
 
-const productModel = mongoose.model("Product", productSchema);
+const ProductModel = mongoose.model("Product", productSchema);
 
 
 const validateProduct = (data) => {
@@ -110,14 +113,38 @@ const validateProduct = (data) => {
     description: Joi.string().max(1000).allow(""),
 
     image: Joi.array().items(Joi.string().uri()),
+  });
 
-    seller: Joi.string().hex().length(24).required(),
+  return schema.validate(data);
+};
+
+const validateUpdateProduct = (data) => {
+  const schema = Joi.object({
+    title: Joi.string().min(3).max(100),
+
+    price: Joi.number().min(0),
+
+    discountedPrice: Joi.number()
+      .min(0)
+      .max(Joi.ref("price"))
+      .messages({
+        "number.max": "Discounted price cannot exceed original price",
+      }),
+
+    category: Joi.string().min(2).max(50),
+
+    stock: Joi.number().min(0),
+
+    description: Joi.string().max(1000).allow(""),
+
+    image: Joi.array().items(Joi.string().uri()),
   });
 
   return schema.validate(data);
 };
 
 module.exports = {
-  productModel,
+  ProductModel,
   validateProduct,
+  validateUpdateProduct
 };

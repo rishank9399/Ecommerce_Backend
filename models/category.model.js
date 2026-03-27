@@ -24,7 +24,7 @@ const categorySchema = new mongoose.Schema(
 
 categorySchema.index({ name: 1 });
 
-const categoryModel = mongoose.model("Category", categorySchema);
+const CategoryModel = mongoose.model("Category", categorySchema);
 
 const validateCategory = (data) => {
   const schema = Joi.object({
@@ -35,6 +35,6 @@ const validateCategory = (data) => {
 };
 
 module.exports = {
-  categoryModel,
+  CategoryModel,
   validateCategory,
 };

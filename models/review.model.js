@@ -34,7 +34,7 @@ const reviewSchema = new mongoose.Schema(
 
 reviewSchema.index({ userId: 1, productId: 1 }, { unique: true });
 
-const reviewModel = mongoose.model("Review", reviewSchema);
+const ReviewModel = mongoose.model("Review", reviewSchema);
 
 
 const validateReview = (data) => {
@@ -53,6 +53,6 @@ const validateReview = (data) => {
 
 
 module.exports = {
-  reviewModel,
+  ReviewModel,
   validateReview,
 };
