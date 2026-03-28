@@ -6,6 +6,7 @@ const {
 const uploadToCloudinary = require("../utils/cloudinaryUpload");
 const productQueryValidation = require("../validators/productQueryValidator");
 const redisClient = require("../config/redis");
+const { invalidateProductCache } = require("../utils/invalidateCache");
 
 const createProduct = async (req, res) => {
   try {
@@ -71,7 +72,7 @@ const getProducts = async (req, res) => {
       sort,
     } = req.query;
 
-    const cacheKey = `products${JSON.stringify(req.query)}`;
+    const cacheKey = `products:${JSON.stringify(req.query)}`;
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       return res
@@ -123,6 +124,11 @@ const getProducts = async (req, res) => {
     };
 
     await redisClient.setEx(cacheKey, 3600, JSON.stringify(data));
+    if (response.category) {
+      await redisClient.sAdd(`tag:category:${response.category}`, cacheKey);
+    }
+    // general list
+    await redisClient.sAdd("tag:products:all", cacheKey);
 
     res.status(200).json({
       success: true,
@@ -199,6 +205,8 @@ const updateProductById = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Incorrect Product ID" });
     }
+
+    await invalidateProductCache(product);
     res
       .status(200)
       .json({ success: true, message: "Product updated successfully" });
@@ -208,9 +216,29 @@ const updateProductById = async (req, res) => {
   }
 };
 
+const deleteProductById = async (req, res) => {
+  try{
+    const { id } = req.params;
+    const product = await ProductModel.findByIdAndUpdate(
+      id,
+      { isActive: false, updatedAt: Date.now() },
+      { new: true }
+    )
+    if(!product){
+      return res.status(400).json({success: false, message: "Invalid product"})
+    }
+    await invalidateProductCache(product);
+    res.status(200).json({ success: true, message: "Successfully deleted product" });
+  } catch(err) {
+    console.log("Error in deleting product: ", err);
+    res.status(500).json({ success: false, message: "Failed to delete product" });
+  }
+}
+
 module.exports = {
   createProduct,
   getProducts,
   getProductById,
   updateProductById,
+  deleteProductById,
 };

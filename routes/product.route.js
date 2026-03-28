@@ -7,6 +7,7 @@ const {
   getProducts,
   getProductById,
   updateProductById,
+  deleteProductById,
 } = require("../controllers/product.controller");
 
 router.get("/", getProducts);
@@ -28,5 +29,7 @@ router.patch(
   upload.single("image"),
   updateProductById,
 );
+
+router.delete("/:id", isAuthenticated, isSeller, deleteProductById);
 
 module.exports = router;
