@@ -18,6 +18,12 @@ const invalidateProductCache = async (product) => {
     await redisClient.del(allKeys);
     await redisClient.del("tag:products:all");
   }
+  return;
 };
 
-module.exports = { invalidateProductCache };
+const invalidateReviewCache = async(productId) => {
+  await redisClient.del(`reviews:${productId}`);
+  return;
+}
+
+module.exports = { invalidateProductCache, invalidateReviewCache };

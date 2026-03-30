@@ -12,17 +12,14 @@ const categorySchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-
-    slug: {
-      type: String,
-      unique: true,
-      lowercase: true,
-    },
+    isDeleted: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );
 
-categorySchema.index({ name: 1 });
 
 const CategoryModel = mongoose.model("Category", categorySchema);
 

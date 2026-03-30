@@ -9,7 +9,7 @@ POST   /api/auth/login
 GET    /api/auth/profile
 PUT    /api/auth/update-profile
 POST   /api/auth/logout
-POST   /api/auth/refresh-token
+POST   /api/auth/refresh-token !!
 
 
 2. PRODUCT ROUTES
@@ -29,6 +29,7 @@ GET /api/products?category=mobile&minPrice=10000&maxPrice=50000&search=iphone
 POST   /api/categories
 GET    /api/categories
 GET    /api/categories/:id
+GET    /api/categories/:id/products (filter + pagination) !!
 PUT    /api/categories/:id
 DELETE /api/categories/:id
 
