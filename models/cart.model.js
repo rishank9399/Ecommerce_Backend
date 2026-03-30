@@ -46,8 +46,6 @@ const validateCart = (data) => {
   });
 
   const schema = Joi.object({
-    user: Joi.string().hex().length(24).required(),
-
     products: Joi.array().items(productSchema).min(1).required(),
 
     totalPrice: Joi.number().min(0),

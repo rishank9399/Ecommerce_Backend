@@ -124,8 +124,8 @@ const getProducts = async (req, res) => {
     };
 
     await redisClient.setEx(cacheKey, 3600, JSON.stringify(data));
-    if (response.category) {
-      await redisClient.sAdd(`tag:category:${response.category}`, cacheKey);
+    if (category) {
+      await redisClient.sAdd(`tag:category:${category}`, cacheKey);
     }
     // general list
     await redisClient.sAdd("tag:products:all", cacheKey);

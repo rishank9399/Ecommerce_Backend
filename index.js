@@ -9,6 +9,7 @@ const userRoute = require('./routes/user.route');
 const productRoute = require('./routes/product.route');
 const categoryRoute = require('./routes/category.route');
 const reviewRoute = require('./routes/review.route');
+const cartRoute = require('./routes/cart.route');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -18,7 +19,8 @@ app.use('/api/user', userRoute);
 app.use('/api/products', productRoute);
 app.use('/api/categories', categoryRoute);
 app.use('/api/reviews', reviewRoute);
+app.use('/api/cart', cartRoute);
 
 app.listen(PORT, () => {
-    console.log("Server is running on port 3000");
+    console.log(`Server is running on port ${PORT}`);
 });

@@ -36,7 +36,7 @@ DELETE /api/categories/:id
 
 4. REVIEW ROUTES
 
-POST   /api/reviews              (add review)
+POST   /api/reviews/:productId   (add review)
 GET    /api/reviews/:productId   (get product reviews)
 DELETE /api/reviews/:id          (user/admin)
 
