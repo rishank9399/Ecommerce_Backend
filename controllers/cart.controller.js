@@ -84,7 +84,7 @@ const getCart = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Cart not found" });
     }
-    redisCLient.setEx(cacheKey, 3600, JSON.stringify(cart));
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(cart));
     res.status(200).json({ success: true, data: cart });
   } catch (err) {
     console.log("Error in fetching cart: ", err);
@@ -120,6 +120,24 @@ const updateCart = async (req, res) => {
         data: cart,
       });
     }
+    let productIndex = cart.products.findIndex(
+      (p) => p.productId.toString() === productId,
+    );
+    if(productIndex === -1) {
+        cart.products.push({ productId, quantity: 1 });
+        cart.totalPrice += parseFloat((product.discountedPrice).toFixed(2));
+    }
+    else {
+        cart.products[productIndex].quantity += 1;
+        cart.totalPrice += parseFloat((product.discountedPrice).toFixed(2));
+    }
+    await cart.save();
+    await redisClient.del(`cart:${userId}`);
+    res.status(200).json({
+      success: true,
+      message: "Cart updated successfully",
+      data: cart,
+    });
   } catch (err) {
     console.log("Error in updating cart: ", err);
   }
@@ -159,7 +177,7 @@ const deleteFromCart = async (req, res) => {
 const deleteCart = async(req, res) => {
     try{
         const userId = req.user._id;
-        let cart = CartModel.findOneAndDelete(userId);
+        let cart = await CartModel.findOneAndDelete({ user: userId });
         if(!cart){
             return res.status(404).json({success: false, message: "Cart not found"});
         }
