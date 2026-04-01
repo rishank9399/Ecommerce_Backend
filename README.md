@@ -59,14 +59,14 @@ DELETE /api/cart                 (clear cart)
 POST   /api/orders               (place order)
 GET    /api/orders/my            (user orders)
 GET    /api/orders/:id           (order details)
-PUT    /api/orders/:id/status    (admin/seller)
+PATCH    /api/orders/:id/status    (admin/seller)
 
 
 7. PAYMENT ROUTES
 
-POST   /api/payments/create-order     (razorpay/stripe order)
-POST   /api/payments/verify          (verify payment)
-GET    /api/payments/:id             (payment details)
+POST   /api/payment/create/order     (razorpay order)
+POST   /api/payment/verify          (verify payment)
+GET    /api/payment/:id             (payment details) !!
 
 
 8. DELIVERY ROUTES

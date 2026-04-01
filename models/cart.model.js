@@ -23,6 +23,12 @@ const cartSchema = new mongoose.Schema(
           required: true,
           min: [1, "Quantity must be at least 1"],
         },
+
+        priceAtPurchase: {
+          type: Number,
+          required: true,
+          min: 0,
+        }
       },
     ],
 
@@ -43,6 +49,7 @@ const validateCart = (data) => {
   const productSchema = Joi.object({
     productId: Joi.string().hex().length(24).required(),
     quantity: Joi.number().min(1).required(),
+    priceAtPurchase: Joi.number().min(0).required(),
   });
 
   const schema = Joi.object({

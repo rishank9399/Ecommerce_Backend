@@ -39,7 +39,6 @@ const orderSchema = new mongoose.Schema(
 
     address: {
       type: String,
-      required: true,
       minlength: 5,
       maxlength: 200,
       trim: true,

@@ -2,13 +2,11 @@ const mongoose = require("mongoose");
 
 const paymentSchema = new mongoose.Schema({
     orderId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "order",
+        type: String,
         required: true
     },
     paymentId: {
-        type: String,
-        required: true
+        type: String
     },
     amount: {
         type: Number,
@@ -19,8 +17,7 @@ const paymentSchema = new mongoose.Schema({
         required: true
     },
     signature: {
-        type: String,
-        required: true
+        type: String
     },
     status: {
         type: String,
@@ -29,4 +26,4 @@ const paymentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const PaymentModel = mongoose.model("payment", paymentSchema);
-module.exports = PaymentModel;
+module.exports = {PaymentModel};

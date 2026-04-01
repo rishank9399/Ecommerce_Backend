@@ -31,7 +31,7 @@ const addToCart = async (req, res) => {
     if (!cart) {
       cart = await CartModel.create({
         user: userId,
-        products: [{ productId, quantity }],
+        products: [{ productId, quantity, priceAtPurchase: product.discountedPrice }],
         totalPrice: parseFloat((quantity * product.discountedPrice).toFixed(2)),
       });
       return res.status(201).json({
@@ -46,9 +46,10 @@ const addToCart = async (req, res) => {
 
     if (productIndex !== -1) {
       cart.products[productIndex].quantity += quantity;
+      cart.products[productIndex].priceAtPurchase = product.discountedPrice;
       cart.totalPrice += parseFloat((quantity * product.discountedPrice).toFixed(2));
     } else {
-      cart.products.push({ productId, quantity });
+      cart.products.push({ productId, quantity, priceAtPurchase: product.discountedPrice });
       cart.totalPrice += parseFloat((quantity * product.discountedPrice).toFixed(2));
     }
 
@@ -77,7 +78,7 @@ const getCart = async (req, res) => {
     }
     let cart = await CartModel.findOne({ user: userId }).populate(
       "products.productId",
-      "title discountedPrice image",
+      "title image",
     );
     if (!cart) {
       return res
@@ -111,7 +112,7 @@ const updateCart = async (req, res) => {
     if (!cart) {
       cart = await CartModel.create({
         user: userId,
-        products: [{ productId, quantity: 1 }],
+        products: [{ productId, quantity: 1, priceAtPurchase: product.discountedPrice }],
         totalPrice: parseFloat((product.discountedPrice).toFixed(2)),
       });
       return res.status(201).json({
@@ -124,10 +125,16 @@ const updateCart = async (req, res) => {
       (p) => p.productId.toString() === productId,
     );
     if(productIndex === -1) {
-        cart.products.push({ productId, quantity: 1 });
+        if (quantity > product.stock) {
+            return res.status(400).json({ message: "Exceeds available stock" });
+        }
+        cart.products.push({ productId, quantity: 1, priceAtPurchase: product.discountedPrice });
         cart.totalPrice += parseFloat((product.discountedPrice).toFixed(2));
     }
     else {
+        if (cart.products[productIndex].quantity + quantity > product.stock) {
+            return res.status(400).json({ message: "Exceeds available stock" });
+        }
         cart.products[productIndex].quantity += 1;
         cart.totalPrice += parseFloat((product.discountedPrice).toFixed(2));
     }
