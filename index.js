@@ -1,10 +1,12 @@
 require('dotenv').config();
 require('./config/db');
 require('./config/redis');
+
 const express = require('express');
 const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 const indexRoute = require('./routes/index.route');
 const userRoute = require('./routes/user.route');
 const productRoute = require('./routes/product.route');
@@ -12,8 +14,10 @@ const categoryRoute = require('./routes/category.route');
 const reviewRoute = require('./routes/review.route');
 const cartRoute = require('./routes/cart.route');
 const paymentRoute = require('./routes/payment.route');
+const orderRoute = require('./routes/order.route');
+const DeliveryRoute = require('./routes/delivery.route');
 
-app.use(cors());
+app.use(cors()); //As of now allowing all origins
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -25,6 +29,7 @@ app.use('/api/reviews', reviewRoute);
 app.use('/api/cart', cartRoute);
 app.use('/api/payment', paymentRoute);
 app.use('/api/orders', orderRoute);
+app.use('/api/delivery', DeliveryRoute);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

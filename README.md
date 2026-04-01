@@ -59,19 +59,19 @@ DELETE /api/cart                 (clear cart)
 POST   /api/orders               (place order)
 GET    /api/orders/my            (user orders)
 GET    /api/orders/:id           (order details)
-PATCH    /api/orders/:id/status    (admin/seller)
+PATCH    /api/orders/:id/status  (admin/seller)
 
 
 7. PAYMENT ROUTES
 
-POST   /api/payment/create/order     (razorpay order)
+POST   /api/payment/create/order    (razorpay order)
 POST   /api/payment/verify          (verify payment)
 GET    /api/payment/:id             (payment details) !!
 
 
 8. DELIVERY ROUTES
 
-POST   /api/delivery                 (assign delivery)
+POST   /api/delivery/:orderId        (assign delivery)
 GET    /api/delivery/:orderId        (track delivery)
 PUT    /api/delivery/:id/status      (update delivery status)
 

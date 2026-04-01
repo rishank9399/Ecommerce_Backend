@@ -10,11 +10,8 @@ const deliverySchema = new mongoose.Schema(
     },
 
     deliveryBoy: {
-      type: String,
-      required: true,
-      minlength: 3,
-      maxlength: 50,
-      trim: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DeliveryPartner",
     },
 
     status: {

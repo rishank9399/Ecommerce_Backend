@@ -2,12 +2,13 @@ const { CartModel } = require("../models/cart.model");
 const { OrderModel } = require("../models/order.model");
 const { PaymentModel } = require("../models/payment.model");
 const { redisClient } = require("../config/redis");
+const { validateUserUpdate } = require("../models/user.model");
+const { DeliveryModel } = require("../models/delivery.model");
 
 const createOrder = async (req, res) => {
+  const { userId, razorpayOrderId, razorpayPaymentId, signature } = req.params;
   try {
-    const { userId, razorpayOrderId, razorpayPaymentId, signature } =
-      req.params;
-
+    const { address, city, state, zip, country } = req.body;
     const payment = await PaymentModel.findOne({
       orderId: razorpayOrderId,
       paymentId: razorpayPaymentId,
@@ -19,8 +20,22 @@ const createOrder = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Invalid payment details" });
     }
+    const { error } = validateUserUpdate({
+      addresses: { address, city, state, zip, country },
+    });
+    if (error) {
+      console.log(
+        `Shipping address payment faliure: ${userId}, ${razorpayOrderId}, ${razorpayPaymentId}, ${signature}`,
+      );
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid shipping address" });
+    }
     const cart = await CartModel.findOne({ user: userId });
     if (!cart || cart.products.length === 0) {
+      console.log(
+        `Empty cart payment faliure: ${userId}, ${razorpayOrderId}, ${razorpayPaymentId}, ${signature}`,
+      );
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
     let productData = cart.products.map((item) => ({
@@ -29,6 +44,7 @@ const createOrder = async (req, res) => {
       priceAtPurchase: item.priceAtPurchase,
     }));
     await OrderModel.create({
+      addresses: { address, city, state, zip, country },
       products: productData,
       user: userId,
       totalPrice: payment.amount,
@@ -42,7 +58,10 @@ const createOrder = async (req, res) => {
       .status(201)
       .json({ success: true, message: "Order created successfully" });
   } catch (err) {
-    console.log("Error in creating order: ", err);
+    console.log(
+      `Error in creating order || ${userId}, ${razorpayOrderId}, ${razorpayPaymentId}, ${signature} ||: `,
+      err,
+    );
     res
       .status(500)
       .json({ success: false, message: "Error in creating order" });
@@ -54,8 +73,10 @@ const getMyOrders = async (req, res) => {
     const userId = req.user._id;
     const cacheKey = `myOrders:${userId}`;
     const cachedOrders = await redisClient.get(cacheKey);
-    if(cachedOrders) {
-        return res.status(500).json({ success: false, data: JSON.parse(cachedOrders)});
+    if (cachedOrders) {
+      return res
+        .status(500)
+        .json({ success: false, data: JSON.parse(cachedOrders) });
     }
 
     //Remaining : Implement pagination and limit
@@ -80,47 +101,72 @@ const getMyOrders = async (req, res) => {
   }
 };
 
-const getOrderById = async(req, res) => {
-    try{
-        const userId = req.user._id;
-        const orderId = req.params.id;
-        const cacheKey = `order:${orderId}`;
-        const cachedOrder = await redisClient.get(cacheKey);
-        if(cachedOrder) {
-            return res.status(200).json({ success: true, data: JSON.parse(cachedOrder)})
-        }
-
-        const order = await OrderModel.findOne({ _id: orderId, user: userId }).select("products totalPrice status createdAt payment").populate("products.productId", "title image").populate("payment", "amount paymentId").lean();
-        if(!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
-        }
-        await redisClient.setEx(cacheKey, 3600, JSON.stringify(order));
-        res.status(200).json({success: true, data: order });
+const getOrderById = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const orderId = req.params.id;
+    const cacheKey = `order:${orderId}`;
+    const cachedOrder = await redisClient.get(cacheKey);
+    if (cachedOrder) {
+      return res
+        .status(200)
+        .json({ success: true, data: JSON.parse(cachedOrder) });
     }
-    catch(err) {
-        console.log("Erro  in fetching order details: ", err);
-        res.status(500).json({ success: false, message: "Error in fetching order details" });
-    }
-}
 
-const updateOrderStatus = async(req, res) => {
-    try{
-        const orderId = req.params.id;
-        const {status} = req.body;
-
-        const order = await OrderModel.findById(orderId);
-        if(!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
-        }
-        order.status = status;
-        await order.save();
-        res.status(200).json({success: true, message: "Order status successfully updated", data: order });
+    const order = await OrderModel.findOne({ _id: orderId, user: userId })
+      .select("products totalPrice status createdAt payment")
+      .populate("products.productId", "title image")
+      .populate("payment", "amount paymentId")
+      .lean();
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
-    catch(err) {
-        console.log("Error in updation order status: ", err);
-        res.status(500).json({ success: false, message: "Error in updating order status" });
-    }
-}
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(order));
+    res.status(200).json({ success: true, data: order });
+  } catch (err) {
+    console.log("Erro  in fetching order details: ", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Error in fetching order details" });
+  }
+};
 
+const updateOrderStatus = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { status } = req.body;
+
+    const order = await OrderModel.findById(orderId);
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+    order.status = status;
+    await order.save();
+
+    if(order.status === 'confirmed'){
+        await DeliveryModel.create({
+            order: orderId,
+            status: "pending",
+            estimatedDeliveryTime: Date.now() + 7 * 24 * 60 * 60 * 1000
+        })
+    }
+    res
+      .status(200)
+      .json({
+        success: true,
+        message: "Order status successfully updated",
+        data: order,
+      });
+  } catch (err) {
+    console.log("Error in updation order status: ", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Error in updating order status" });
+  }
+};
 
 module.exports = { createOrder, getMyOrders, getOrderById, updateOrderStatus };
