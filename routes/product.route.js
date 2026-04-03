@@ -9,6 +9,8 @@ const {
   updateProductById,
   deleteProductById,
 } = require("../controllers/product.controller");
+const limits = require("../utils/rateLimitConfigs");
+const rateLimiter = require("../middlewares/rateLimiter.middleware");
 
 router.get("/", getProducts);
 
@@ -16,6 +18,7 @@ router.post(
   "/",
   isAuthenticated,
   isSeller,
+  rateLimiter(limits.relaxed),
   upload.single("image"),
   createProduct,
 );
