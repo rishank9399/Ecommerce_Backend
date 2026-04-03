@@ -39,8 +39,6 @@ const ReviewModel = mongoose.model("Review", reviewSchema);
 
 const validateReview = (data) => {
   const schema = Joi.object({
-    userId: Joi.string().hex().length(24).required(),
-
     productId: Joi.string().hex().length(24).required(),
 
     rating: Joi.number().min(1).max(5).required(),

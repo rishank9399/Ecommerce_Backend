@@ -6,7 +6,27 @@ const client = redis.createClient({
     socket: {
         host: process.env.REDIS_HOST,
         port: process.env.REDIS_PORT,
+        reconnectStrategy: (retries) => {
+            console.log(`Redis retry attempt: ${retries}`);
+            return Math.min(retries * 100, 3000);
+        }
     }
+});
+
+client.on("error", (err) => {
+    console.error("Redis Error:", err);
+});
+
+client.on("connect", () => {
+    console.log("Redis connecting...");
+});
+
+client.on("ready", () => {
+    console.log("Redis ready to use");
+});
+
+client.on("reconnecting", () => {
+    console.log("Redis reconnecting...");
 });
 
 client.connect()

@@ -1,6 +1,6 @@
 const { validateCart, CartModel } = require("../models/cart.model");
 const { ProductModel } = require("../models/product.model");
-const { redisClient } = require("../config/redis");
+const redisClient = require("../config/redis");
 
 const addToCart = async (req, res) => {
   try {
@@ -93,7 +93,7 @@ const getCart = async (req, res) => {
   }
 };
 
-const updateCart = async (req, res) => {
+const addItemToCart = async (req, res) => {
   try {
     const { productId } = req.params;
     const userId = req.user._id;
@@ -132,7 +132,7 @@ const updateCart = async (req, res) => {
         cart.totalPrice += parseFloat((product.discountedPrice).toFixed(2));
     }
     else {
-        if (cart.products[productIndex].quantity + quantity > product.stock) {
+        if (cart.products[productIndex].quantity + 1 > product.stock) {
             return res.status(400).json({ message: "Exceeds available stock" });
         }
         cart.products[productIndex].quantity += 1;
@@ -196,4 +196,4 @@ const deleteCart = async(req, res) => {
         res.status(500).json({ success: false, message: "Failed to delete cart"});
     }
 }
-module.exports = { addToCart, getCart, updateCart, deleteFromCart, deleteCart };
+module.exports = { addToCart, getCart, addItemToCart, deleteFromCart, deleteCart };

@@ -1,12 +1,13 @@
 const { CartModel } = require("../models/cart.model");
 const { OrderModel } = require("../models/order.model");
 const { PaymentModel } = require("../models/payment.model");
-const { redisClient } = require("../config/redis");
+const redisClient = require("../config/redis");
 const { validateUserUpdate } = require("../models/user.model");
 const { DeliveryModel } = require("../models/delivery.model");
 
 const createOrder = async (req, res) => {
-  const { userId, razorpayOrderId, razorpayPaymentId, signature } = req.params;
+  const userId = req.user._id;
+  const { razorpayOrderId, razorpayPaymentId, signature } = req.params;
   try {
     const { address, city, state, zip, country } = req.body;
     const payment = await PaymentModel.findOne({
@@ -21,15 +22,16 @@ const createOrder = async (req, res) => {
         .json({ success: false, message: "Invalid payment details" });
     }
     const { error } = validateUserUpdate({
-      addresses: { address, city, state, zip, country },
+      addresses: [{ address, city, state, zip, country }],
     });
     if (error) {
       console.log(
         `Shipping address payment faliure: ${userId}, ${razorpayOrderId}, ${razorpayPaymentId}, ${signature}`,
       );
+      console.log(error.details[0].message)
       return res
         .status(400)
-        .json({ success: false, message: "Invalid shipping address" });
+        .json({ success: false, message: error.details[0].message });
     }
     const cart = await CartModel.findOne({ user: userId });
     if (!cart || cart.products.length === 0) {
@@ -44,7 +46,7 @@ const createOrder = async (req, res) => {
       priceAtPurchase: item.priceAtPurchase,
     }));
     await OrderModel.create({
-      addresses: { address, city, state, zip, country },
+      addresses: [{ address, city, state, zip, country }],
       products: productData,
       user: userId,
       totalPrice: payment.amount,
@@ -53,7 +55,7 @@ const createOrder = async (req, res) => {
     });
 
     await CartModel.findOneAndDelete({ user: userId });
-
+    await redisClient.del(`myOrders:${userId}`)
     res
       .status(201)
       .json({ success: true, message: "Order created successfully" });
@@ -75,8 +77,8 @@ const getMyOrders = async (req, res) => {
     const cachedOrders = await redisClient.get(cacheKey);
     if (cachedOrders) {
       return res
-        .status(500)
-        .json({ success: false, data: JSON.parse(cachedOrders) });
+        .status(200)
+        .json({ success: true, data: JSON.parse(cachedOrders) });
     }
 
     //Remaining : Implement pagination and limit
@@ -104,7 +106,7 @@ const getMyOrders = async (req, res) => {
 const getOrderById = async (req, res) => {
   try {
     const userId = req.user._id;
-    const orderId = req.params.id;
+    const orderId = req.params.orderId;
     const cacheKey = `order:${orderId}`;
     const cachedOrder = await redisClient.get(cacheKey);
     if (cachedOrder) {
@@ -135,7 +137,7 @@ const getOrderById = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
   try {
-    const orderId = req.params.id;
+    const orderId = req.params.orderId;
     const { status } = req.body;
 
     const order = await OrderModel.findById(orderId);
@@ -148,12 +150,15 @@ const updateOrderStatus = async (req, res) => {
     await order.save();
 
     if(order.status === 'confirmed'){
-        await DeliveryModel.create({
-            order: orderId,
-            status: "pending",
-            estimatedDeliveryTime: Date.now() + 7 * 24 * 60 * 60 * 1000
-        })
+      await DeliveryModel.create({
+          order: orderId,
+          status: "pending",
+          estimatedDeliveryTime: Date.now() + 7 * 24 * 60 * 60 * 1000
+      })
+      await redisClient.del(`order:${orderId}`)
+      return res.status(201).json({success: true, message: "Order confirmed"})
     }
+    await redisClient.del(`order:${orderId}`)
     res
       .status(200)
       .json({

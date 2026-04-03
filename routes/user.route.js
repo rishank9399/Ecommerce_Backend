@@ -7,6 +7,6 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 router.get("/profile", isAuthenticated, getUser);
-router.put("/update-profile", isAuthenticated, updateUser );
+router.patch("/update-profile", isAuthenticated, updateUser );
 
 module.exports = router;

@@ -12,7 +12,7 @@ const {
 router.post("/", isAuthenticated, isSeller, createCategory);
 router.get("/", getAllCategories);
 router.get("/:id", getCategoryById);
-router.put("/:id", isAuthenticated, isSeller, updateCategoryById);
+router.patch("/:id", isAuthenticated, isSeller, updateCategoryById);
 router.delete("/:id", isAuthenticated, isSeller, deleteCategoryById);
 
 module.exports = router;

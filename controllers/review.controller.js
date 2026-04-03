@@ -9,9 +9,9 @@ const addReview = async(req, res) => {
     try{
         const { rating, comment } = req.body;
         const userId = req.user._id;
-        const productId = req.params.id;
+        const productId = req.params.productId;
 
-        let { error } = validateReview({ userId, productId, rating, comment });
+        let { error } = validateReview({productId, rating, comment });
         if(error) {
             return res.status(400).json({success: false, message: error.details[0].message});
         }
@@ -26,7 +26,7 @@ const addReview = async(req, res) => {
             return res.status(400).json({success: false, message: "Invalid product ID" });
         }
 
-        const review = ReviewModel.create({
+        const review = await ReviewModel.create({
             userId,
             productId,
             rating,
@@ -37,7 +37,9 @@ const addReview = async(req, res) => {
 
         product.rating = (product.rating * product.numberOfReviews + rating) / (product.numberOfReviews + 1);
         product.numberOfReviews += 1;
+
         await product.save();
+        await redisClient.set(`product:${productId}`, JSON.stringify(product));
 
         res.status(201).json({success: true, message: "Review added successfully" });
     }
@@ -49,7 +51,7 @@ const addReview = async(req, res) => {
 
 const getReviews = async(req, res) => {
     try{
-        const productId = req.params.id;
+        const productId = req.params.productId;
         const cacheKey = `reviews:${productId}`;
         const cachedReviews = await redisClient.get(cacheKey);
         if(cachedReviews){
@@ -70,7 +72,7 @@ const deleteReview = async(req, res) => {
     try{
         const session = await mongoose.startSession();
         session.startTransaction();
-        const reviewId = req.params.id;
+        const reviewId = req.params.reviewId;
         const userId = req.user._id;
 
         const review = await ReviewModel.findOneAndDelete({ _id: reviewId, userId }, {session});
@@ -98,6 +100,7 @@ const deleteReview = async(req, res) => {
         session.endSession();
 
         await invalidateReviewCache(review.productId);
+        await redisClient.del(`product:${review.productId}`);
         res.status(200).json({success: true, message: "Review deleted successfully" });
     }
     catch(err) {

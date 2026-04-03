@@ -49,7 +49,7 @@ const validateCart = (data) => {
   const productSchema = Joi.object({
     productId: Joi.string().hex().length(24).required(),
     quantity: Joi.number().min(1).required(),
-    priceAtPurchase: Joi.number().min(0).required(),
+    priceAtPurchase: Joi.number().min(0),
   });
 
   const schema = Joi.object({

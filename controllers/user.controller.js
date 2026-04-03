@@ -129,7 +129,7 @@ exports.getUser = async (req, res, next) => {
       .status(200)
       .json({
         success: true,
-        data: { username: user.username, email: user.email },
+        data: user,
       });
   } catch (error) {
     console.log("Error in fetching user", error);

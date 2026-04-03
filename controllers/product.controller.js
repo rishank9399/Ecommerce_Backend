@@ -7,6 +7,7 @@ const uploadToCloudinary = require("../utils/cloudinaryUpload");
 const productQueryValidation = require("../validators/productQueryValidator");
 const redisClient = require("../config/redis");
 const { invalidateProductCache } = require("../utils/invalidateCache");
+const { CategoryModel } = require("../models/category.model");
 
 const createProduct = async (req, res) => {
   try {
@@ -31,7 +32,7 @@ const createProduct = async (req, res) => {
         .json({ success: false, message: error.details[0].message });
     }
     const result = await uploadToCloudinary(file.buffer);
-    await ProductModel.create({
+    const product = await ProductModel.create({
       title,
       price,
       discountedPrice,
@@ -41,6 +42,14 @@ const createProduct = async (req, res) => {
       seller: req.user._id,
       image: result.secure_url,
     });
+    invalidateProductCache(product._id);
+
+    const isAvailable = await CategoryModel.findOne({name: category.toLowerCase()}).lean();
+    if(!isAvailable){
+      await CategoryModel.create({
+        name: category.toLowerCase()
+      })
+    }
     res
       .status(201)
       .json({ success: true, message: "Product created successfully" });
@@ -172,10 +181,11 @@ const getProductById = async (req, res) => {
 const updateProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, price, discountedPrice, category, stock, description } =
-      req.body;
+    let { title, price, discountedPrice, category, stock, description } =
+      req.body || {};
     const file = req.file;
-
+    if(price) price = Number(price);
+    if(discountedPrice) discountedPrice = Number(discountedPrice)
     const { error } = validateUpdateProduct({
       title,
       price,
@@ -197,7 +207,7 @@ const updateProductById = async (req, res) => {
     const product = await ProductModel.findByIdAndUpdate(
       id,
       { ...req.body, updatedAt: Date.now() },
-      { new: true, runValidators: true },
+      { new: true },
     );
 
     if (!product) {
@@ -207,6 +217,16 @@ const updateProductById = async (req, res) => {
     }
 
     await invalidateProductCache(product);
+
+    if(category){
+      const isAvailable = await CategoryModel.findOne({name: category.toLowerCase()}).lean();
+      if(!isAvailable){
+        await CategoryModel.create({
+          name: category.toLowerCase()
+        })
+      }
+    }
+    
     res
       .status(200)
       .json({ success: true, message: "Product updated successfully" });

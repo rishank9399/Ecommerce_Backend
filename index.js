@@ -1,6 +1,7 @@
 require('dotenv').config();
-require('./config/db');
 require('./config/redis');
+const ConnectDB = require('./config/db');
+ConnectDB();
 
 const express = require('express');
 const cors = require('cors');
@@ -28,7 +29,7 @@ app.use('/api/categories', categoryRoute);
 app.use('/api/reviews', reviewRoute);
 app.use('/api/cart', cartRoute);
 app.use('/api/payment', paymentRoute);
-app.use('/api/orders', orderRoute);
+app.use('/api/order', orderRoute);
 app.use('/api/delivery', DeliveryRoute);
 
 app.listen(PORT, () => {

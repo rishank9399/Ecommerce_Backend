@@ -21,12 +21,6 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: [true, "Discounted price is required"],
       min: [0, "Discounted price cannot be negative"],
-      validate: {
-        validator: function (value) {
-          return value <= this.price;
-        },
-        message: "Discounted price cannot be greater than original price",
-      },
     },
 
     category: {
@@ -126,7 +120,11 @@ const validateUpdateProduct = (data) => {
 
     discountedPrice: Joi.number()
       .min(0)
-      .max(Joi.ref("price"))
+      .when("price", {
+        is: Joi.number().required(),
+        then: Joi.number().max(Joi.ref("price")),
+        otherwise: Joi.number(),
+      })
       .messages({
         "number.max": "Discounted price cannot exceed original price",
       }),

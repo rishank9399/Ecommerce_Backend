@@ -1,9 +1,10 @@
 const { validateCategory, CategoryModel } = require("../models/category.model");
+const redisClient = require("../config/redis")
 
 const createCategory = async(req, res) => {
     try{
         const { name } = req.body;
-        let { error } = validateCategory(name);
+        let { error } = validateCategory({name});
         if(error){
             return res.status(400).json({success: false, message: error.details[0].message});
         }
@@ -12,6 +13,7 @@ const createCategory = async(req, res) => {
             return res.status(400).json({success: false, message: "Category already exists"})
         }
         await CategoryModel.create({ name });
+        await redisClient.del(`category: ${id}`);
         res.status(200).json({success: true, message: "Category created successfully"});
     }
     catch(err) {
@@ -28,7 +30,7 @@ const getAllCategories = async(req, res) => {
             return res.status(200).json({success: true, data: JSON.parse(cachedCategories)});
         }
         const categories = await CategoryModel.find({isDeleted: false}).sort({ createdAt: -1 });
-        await redisClient.setex(cacheKey, 3600, JSON.stringify(categories));
+        await redisClient.setEx(cacheKey, 3600, JSON.stringify(categories));
         res.status(200).json({success: true, data: categories});
     }
     catch(err) {
@@ -49,7 +51,7 @@ const getCategoryById = async(req, res) => {
         if(!category) {
             return res.status(400).json({success: false, message: "Incorrect category ID"});
         }
-        await redisClient.setEX(cacheKey, 3600, JSON.stringify(category));
+        await redisClient.setEx(cacheKey, 3600, JSON.stringify(category));
         res.status(200).json({success: true, data: category});
     }
     catch(err) {
@@ -61,8 +63,8 @@ const getCategoryById = async(req, res) => {
 const updateCategoryById = async(req, res) => {
     try{
         const { id } = req.params;
-        const { name } = req.body;
-        let { error } = validateCategory(name);
+        const { name } = req.body || {};
+        let { error } = validateCategory({name});
         if(error){
             return res.status(400).json({success: false, message: error.details[0].message});
         }
