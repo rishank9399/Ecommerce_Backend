@@ -1,30 +1,41 @@
 const jwt = require("jsonwebtoken");
-const Blacklist = require("../models/blacklist.model");
 const {UserModel} = require("../models/user.model");
 
-exports.isAuthenticated = async (req, res, next) => {
+exports.isAuthenticated = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
         success: false,
-        message: "Token is required",
+        message: "Access Token is required",
       });
     }
     const token = authHeader.split(" ")[1];
     if (!token) {
       return res.status(401).json({ success: false,message: "Unauthorized" });
     }
-    const isTokenBlacklisted = await Blacklist.findOne({ token });
-    if (isTokenBlacklisted) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        message: "Token expired or invalid",
+      });
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await UserModel.findById(decoded.userId);
-    if (!user) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+
+    if (!decoded._id || !decoded.role) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token payload",
+      });
     }
-    req.user = user;
+
+    req.user = {
+      _id: decoded._id,
+      role: decoded.role,
+    };
     next();
   }
   catch (error) {
@@ -33,7 +44,7 @@ exports.isAuthenticated = async (req, res, next) => {
   }
 };
 
-exports.isSeller = async (req, res, next) => {
+exports.isSeller = (req, res, next) => {
   try {
     if (req.user.role !== "seller") {
       return res.status(403).json({ success: false, message: "Unauthorized" });
