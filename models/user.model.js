@@ -43,7 +43,8 @@ const addressSchema = new mongoose.Schema(
 const userSchema = new mongoose.Schema(
   {
     refreshToken: {
-      type: String
+      type: String,
+      select: false
     },
     username: {
       type: String,

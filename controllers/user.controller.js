@@ -198,7 +198,7 @@ exports.refreshToken = async(req, res) => {
       return res.status(403).json({ message: "Invalid token payload" });
     }
 
-    const user = await UserModel.findById(decoded._id);
+    const user = await UserModel.findById(decoded._id).select("+refreshToken");
     if (!user || !user.refreshToken) {
       return res.status(403).json({ message: "Invalid token" });
     }
