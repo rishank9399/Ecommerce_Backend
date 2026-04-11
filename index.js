@@ -9,6 +9,7 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const cookieParser = require('cookie-parser')
 const indexRoute = require('./routes/index.route');
 const userRoute = require('./routes/user.route');
 const productRoute = require('./routes/product.route');
@@ -23,6 +24,7 @@ const limits = require('./utils/rateLimitConfigs');
 app.use(cors()); //As of now allowing all origins
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(rateLimiter(limits.relaxed));
 
 app.use('/', indexRoute);
