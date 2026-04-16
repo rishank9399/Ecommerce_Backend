@@ -5,7 +5,9 @@ const redisClient = require("../config/redis")
 
 const assignDelivery = async(req, res) => {
     try{ 
+        console.log(req.params);
         const { orderId } = req.params;
+        console.log(orderId)
 
         const order = await OrderModel.findOne({_id: orderId});
         if(!order){

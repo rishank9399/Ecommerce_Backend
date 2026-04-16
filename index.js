@@ -21,7 +21,11 @@ const orderRoute = require('./routes/order.route');
 const DeliveryRoute = require('./routes/delivery.route');
 const limits = require('./utils/rateLimitConfigs');
 
-app.use(cors()); //As of now allowing all origins
+app.use(cors({
+  origin: `${process.env.CORS_ORIGIN}`,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -29,9 +33,9 @@ app.use(rateLimiter(limits.relaxed));
 
 app.use('/', indexRoute);
 app.use('/api/user', userRoute);
-app.use('/api/products', productRoute);
-app.use('/api/categories', categoryRoute);
-app.use('/api/reviews', reviewRoute);
+app.use('/api/product', productRoute);
+app.use('/api/category', categoryRoute);
+app.use('/api/review', reviewRoute);
 app.use('/api/cart', cartRoute);
 app.use('/api/payment', paymentRoute);
 app.use('/api/order', orderRoute);
