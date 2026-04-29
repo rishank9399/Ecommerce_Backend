@@ -48,7 +48,7 @@ exports.registerUser = async (req, res, next) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production"? true: false,
-      sameSite: "Strict",
+      sameSite: "None",
     });
     res
       .status(201)
@@ -92,7 +92,7 @@ exports.loginUser = async (req, res, next) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production"? true: false,
-      sameSite: "Strict",
+      sameSite: "None",
     });
 
     res.status(200).json({ success: true, message: "Login successful", accessToken });
@@ -220,7 +220,7 @@ exports.refreshToken = async(req, res) => {
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production"? true: false,
-      sameSite: "Strict",
+      sameSite: "None",
     });
 
     res.status(200).json({success: true, message: "Verified successfully", accessToken: newAccessToken})
