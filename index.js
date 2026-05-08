@@ -22,7 +22,7 @@ const DeliveryRoute = require('./routes/delivery.route');
 const limits = require('./utils/rateLimitConfigs');
 
 app.use(cors({
-  origin: `${process.env.CORS_ORIGIN}`,
+  origin: [`${process.env.CORS_ORIGIN}`, `${process.env.CORS_ORIGIN_2}`],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
