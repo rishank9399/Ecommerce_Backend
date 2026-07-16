@@ -40,6 +40,7 @@ app.use('/api/cart', cartRoute);
 app.use('/api/payment', paymentRoute);
 app.use('/api/order', orderRoute);
 app.use('/api/delivery', DeliveryRoute);
+// app.use('/api/seller');
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

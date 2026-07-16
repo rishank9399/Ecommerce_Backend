@@ -21,7 +21,7 @@ const createPayment = async (req, res) => {
     const order = await razorpay.orders.create(options);
 
     const newPayment = await PaymentModel.create({
-      orderId: order.id,
+      razorpayOrderId: order.id,
       amount: order.amount,
       currency: order.currency,
       status: 'pending',
@@ -44,7 +44,7 @@ const verifyPayment = async (req, res) => {
 
     const result = validatePaymentVerification({ "order_id": razorpayOrderId, "payment_id": razorpayPaymentId }, signature, secret);
     if (result) {
-      const payment = await PaymentModel.findOne({ orderId: razorpayOrderId });
+      const payment = await PaymentModel.findOne({ razorpayOrderId });
       payment.paymentId = razorpayPaymentId;
       payment.signature = signature;
       payment.status = 'completed';

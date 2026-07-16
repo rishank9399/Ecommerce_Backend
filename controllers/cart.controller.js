@@ -31,13 +31,13 @@ const addToCart = async (req, res) => {
     if (!cart) {
       cart = await CartModel.create({
         user: userId,
-        products: [{ productId, quantity, priceAtPurchase: product.discountedPrice }],
+        products: [{ productId, quantity, priceAtPurchase: product.discountedPrice, seller: product.seller }],
         totalPrice: parseFloat((quantity * product.discountedPrice).toFixed(2)),
       });
       return res.status(201).json({
         success: true,
         message: "Product added to cart successfully",
-        data: cart,
+        data: cart, // can  be optimized by reducing size of response
       });
     }
     let productIndex = cart.products.findIndex(
@@ -49,7 +49,7 @@ const addToCart = async (req, res) => {
       cart.products[productIndex].priceAtPurchase = product.discountedPrice;
       cart.totalPrice += parseFloat((quantity * product.discountedPrice).toFixed(2));
     } else {
-      cart.products.push({ productId, quantity, priceAtPurchase: product.discountedPrice });
+      cart.products.push({ productId, quantity, priceAtPurchase: product.discountedPrice, seller: product.seller });
       cart.totalPrice += parseFloat((quantity * product.discountedPrice).toFixed(2));
     }
 
@@ -78,7 +78,7 @@ const getCart = async (req, res) => {
     }
     let cart = await CartModel.findOne({ user: userId }).populate(
       "products.productId",
-      "title image",
+      "title image", // image array
     );
     if (!cart) {
       return res
@@ -86,7 +86,7 @@ const getCart = async (req, res) => {
         .json({ success: false, message: "Cart not found" });
     }
     await redisClient.setEx(cacheKey, 3600, JSON.stringify(cart));
-    res.status(200).json({ success: true, data: cart });
+    res.status(200).json({ success: true, data: cart }); // can be optimized || cart
   } catch (err) {
     console.log("Error in fetching cart: ", err);
     res.status(500).json({ success: false, message: "Failed to fetch cart" });
@@ -112,7 +112,7 @@ const addItemToCart = async (req, res) => {
     if (!cart) {
       cart = await CartModel.create({
         user: userId,
-        products: [{ productId, quantity: 1, priceAtPurchase: product.discountedPrice }],
+        products: [{ productId, quantity: 1, priceAtPurchase: product.discountedPrice, seller: product.seller }],
         totalPrice: parseFloat((product.discountedPrice).toFixed(2)),
       });
       return res.status(201).json({

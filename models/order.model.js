@@ -3,27 +3,23 @@ const Joi = require("joi");
 
 const orderSchema = new mongoose.Schema(
   {
-    products: [
-      {
-        productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-          required: true,
-        },
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true,
+    },
 
-        quantity: {
-          type: Number,
-          required: true,
-          min: [1, "Quantity must be at least 1"],
-        },
-
-        priceAtPurchase: {
-          type: Number,
-          required: true,
-          min: 0,
-        },
-      },
-    ],
+    quantity: {
+      type: Number,
+      required: true,
+      min: [1, "Quantity must be at least 1"],
+    },
+    
+    priceAtPurchase: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,16 +27,10 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
 
-    totalPrice: {
-      type: Number,
-      required: true,
-      min: [0, "Total price cannot be negative"],
-    },
-
     address: {
       type: String,
       minlength: 5,
-      maxlength: 200,
+      maxlength: 300,
       trim: true,
     },
 
@@ -60,6 +50,12 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Delivery",
     },
+
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Seller is required"],
+    },
   },
   { timestamps: true }
 );
@@ -69,16 +65,13 @@ orderSchema.index({ user: 1, createdAt: -1 });
 const OrderModel = mongoose.model("Order", orderSchema);
 
 const validateOrder = (data) => {
-  const productSchema = Joi.object({
+
+  const schema = Joi.object({
     productId: Joi.string().hex().length(24).required(),
 
     quantity: Joi.number().min(1).required(),
 
     priceAtPurchase: Joi.number().min(0).required(),
-  });
-
-  const schema = Joi.object({
-    products: Joi.array().items(productSchema).min(1).required(),
 
     user: Joi.string().hex().length(24).required(),
 

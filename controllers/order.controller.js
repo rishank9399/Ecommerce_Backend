@@ -11,11 +11,11 @@ const createOrder = async (req, res) => {
   try {
     const { address, city, state, zip, country } = req.body;
     const payment = await PaymentModel.findOne({
-      orderId: razorpayOrderId,
+      razorpayOrderId,
       paymentId: razorpayPaymentId,
       signature: signature,
       status: "completed",
-    }).lean();
+    }).lean(); // can use .select() as just need to check
     if (!payment) {
       return res
         .status(400)
@@ -31,28 +31,38 @@ const createOrder = async (req, res) => {
       console.log(error.details[0].message)
       return res
         .status(400)
-        .json({ success: false, message: error.details[0].message });
+        .json({ success: false, message: "Invalid shipping address" });
     }
-    const cart = await CartModel.findOne({ user: userId });
+    const cart = await CartModel.findOne({ user: userId }).populate("products.productId");
     if (!cart || cart.products.length === 0) {
       console.log(
         `Empty cart payment faliure: ${userId}, ${razorpayOrderId}, ${razorpayPaymentId}, ${signature}`,
       );
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
-    let productData = cart.products.map((item) => ({
-      productId: item.productId._id,
-      quantity: item.quantity,
-      priceAtPurchase: item.priceAtPurchase,
-    }));
-    await OrderModel.create({
-      addresses: [{ address, city, state, zip, country }],
-      products: productData,
-      user: userId,
-      totalPrice: payment.amount,
-      payment: payment._id,
-      status: "pending",
-    });
+    const orders = [];
+
+    for (const item of cart.products) {
+      if (item.productId.stock < item.quantity) {
+        console.log(
+          `Insufficient stock faliure: ${userId}, ${razorpayOrderId}, ${razorpayPaymentId}, ${signature}`,
+        );
+        return res.status(400).json({success: false, message: `Insufficient stock for ${item.productId.title}`});
+      }
+
+      orders.push({
+        productId: item.productId._id,
+        quantity: item.quantity,
+        priceAtPurchase: item.priceAtPurchase,
+        seller: item.productId.seller,
+        address: `${address}, ${city}, ${state}, ${zip}, ${country}`,
+        user: userId,
+        payment: payment._id,
+        status: "pending",
+      });
+    }
+
+    await OrderModel.insertMany(orders);
 
     await CartModel.findOneAndDelete({ user: userId });
     await redisClient.del(`myOrders:${userId}`)
@@ -83,8 +93,8 @@ const getMyOrders = async (req, res) => {
 
     //Remaining : Implement pagination and limit
     const orders = await OrderModel.find({ user: userId })
-      .select("products totalPrice status createdAt payment")
-      .populate("products.productId", "title image")
+      .select("productId priceAtPurchase status createdAt payment")
+      .populate("productId", "title image")
       .populate("payment", "amount paymentId")
       .sort({ createdAt: -1 })
       .lean();
@@ -94,7 +104,7 @@ const getMyOrders = async (req, res) => {
         .json({ success: false, message: "No orders found" });
     }
     await redisClient.setEx(cacheKey, 3600, JSON.stringify(orders));
-    res.status(200).json({ success: true, data: orders });
+    res.status(200).json({ success: true, data: orders }); // totalPrice -> priceAtPurchase to change in frontend
   } catch (err) {
     console.log("Error in fetching orders: ", err);
     res
@@ -116,8 +126,8 @@ const getOrderById = async (req, res) => {
     }
 
     const order = await OrderModel.findOne({ _id: orderId, user: userId })
-      .select("products totalPrice status createdAt payment")
-      .populate("products.productId", "title image")
+      .select("productId priceAtPurchase status createdAt payment")
+      .populate("productId", "title image")
       .populate("payment", "amount paymentId")
       .lean();
     if (!order) {
@@ -126,7 +136,7 @@ const getOrderById = async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
     await redisClient.setEx(cacheKey, 3600, JSON.stringify(order));
-    res.status(200).json({ success: true, data: order });
+    res.status(200).json({ success: true, data: order }); // here to
   } catch (err) {
     console.log("Erro  in fetching order details: ", err);
     res
@@ -135,7 +145,7 @@ const getOrderById = async (req, res) => {
   }
 };
 
-const updateOrderStatus = async (req, res) => {
+const updateOrderStatus = async (req, res) => { // no use of this controller
   try {
     const orderId = req.params.orderId;
     const { status } = req.body;
