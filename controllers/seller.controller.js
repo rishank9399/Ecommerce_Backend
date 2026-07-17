@@ -11,11 +11,11 @@ const getMyOrders = async (req, res) => {
     const userId = req.user._id;
     const cacheKey = `sellerOrders:${userId}`;
     const cachedOrders = await redisClient.get(cacheKey);
-    if (cachedOrders) {
-      return res
-        .status(200)
-        .json({ success: true, data: JSON.parse(cachedOrders) });
-    }
+    // if (cachedOrders) {
+    //   return res
+    //     .status(200)
+    //     .json({ success: true, data: JSON.parse(cachedOrders) });
+    // }
 
     const orders = await OrderModel.find({ seller: userId })
       .select("productId priceAtPurchase status createdAt payment")
@@ -44,11 +44,11 @@ const getOrderById = async (req, res) => {
     const orderId = req.params.orderId;
     const cacheKey = `order:${orderId}`;
     const cachedOrder = await redisClient.get(cacheKey);
-    if (cachedOrder) {
-      return res
-        .status(200)
-        .json({ success: true, data: JSON.parse(cachedOrder) });
-    }
+    // if (cachedOrder) {
+    //   return res
+    //     .status(200)
+    //     .json({ success: true, data: JSON.parse(cachedOrder) });
+    // }
 
     const order = await OrderModel.findOne({ _id: orderId, seller: userId })
       .select("productId priceAtPurchase status createdAt payment")
@@ -103,6 +103,7 @@ const updateOrderStatus = async (req, res) => {
       return res.status(201).json({success: true, message: "Order cancelled"})
     }
     await redisClient.del(`order:${orderId}`)
+    await redisClient.del('sellerOrders:${userId}')
     res
       .status(200)
       .json({

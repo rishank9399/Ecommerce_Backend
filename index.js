@@ -19,11 +19,12 @@ const cartRoute = require('./routes/cart.route');
 const paymentRoute = require('./routes/payment.route');
 const orderRoute = require('./routes/order.route');
 const DeliveryRoute = require('./routes/delivery.route');
+const SellerRoute = require("./routes/seller.route")
 const limits = require('./utils/rateLimitConfigs');
 
 app.use(cors({
   origin: [`${process.env.CORS_ORIGIN}`, `${process.env.CORS_ORIGIN_2}`],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true
 }));
 app.use(express.json());
@@ -40,7 +41,7 @@ app.use('/api/cart', cartRoute);
 app.use('/api/payment', paymentRoute);
 app.use('/api/order', orderRoute);
 app.use('/api/delivery', DeliveryRoute);
-// app.use('/api/seller');
+app.use('/api/seller', SellerRoute);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

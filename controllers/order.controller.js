@@ -119,14 +119,13 @@ const getOrderById = async (req, res) => {
     const orderId = req.params.orderId;
     const cacheKey = `order:${orderId}`;
     const cachedOrder = await redisClient.get(cacheKey);
-    if (cachedOrder) {
-      return res
-        .status(200)
-        .json({ success: true, data: JSON.parse(cachedOrder) });
-    }
+    // if (cachedOrder) { //for testing
+    //   return res
+    //     .status(200)
+    //     .json({ success: true, data: JSON.parse(cachedOrder) });
+    // }
 
     const order = await OrderModel.findOne({ _id: orderId, user: userId })
-      .select("productId priceAtPurchase status createdAt payment")
       .populate("productId", "title image")
       .populate("payment", "amount paymentId")
       .lean();

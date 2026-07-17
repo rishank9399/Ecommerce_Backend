@@ -14,12 +14,6 @@ const deliverySchema = new mongoose.Schema(
       ref: "DeliveryPartner",
     },
 
-    status: {
-      type: String,
-      enum: ["pending", "picked", "on_the_way", "delivered", "cancelled"],
-      default: "pending",
-    },
-
     trackingURL: {
       type: String,
       trim: true,
